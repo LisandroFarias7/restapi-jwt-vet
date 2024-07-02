@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <title>Pets</title>
+</head>
+
+<body>
+
+    <main class="container">
+        <h1 class="mt-3">Pets</h1>
+
+
+        <ul class="list-group mt-4" id="petsResult">
+            <li class="list-group-item">Sin Mascotas</li>
+        </ul>
+
+        <nav aria-label="Page navigation example">
+            <ul class="pagination mt-3" id="pagination">
+                <li class="page-item"><button class="page-link" href="#">Previous</button></li>
+                <li class="page-item"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item"><button class="page-link" href="#">Next</button></li>
+            </ul>
+        </nav>
+
+        <button id="logout" class="btn btn-warning mt-4">Log Out</button>
+
+    </main>
+
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+        const logout = document.querySelector('#logout');
+        const token = localStorage.getItem('token')
+        const petsResult = document.querySelector('#petsResult')
+        const pagination = document.querySelector('#pagination')
+
+
+        let LIMIT = 5;
+        let PAGE = 1;
+
+        const getPets = async (
+            url = `/api/v1/pets?limit=${LIMIT}&page=${PAGE}`
+        ) => {
+            try {
+
+                const { data } = await axios.get(url, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+
+                })
+
+                const {pagination, pets} = data
+
+                petsResult.textContent = ''
+                pets.forEach(({pid, name, species}) => {
+                    const li = document.createElement('li')
+                    li.textContent = `${pid} - ${name} - ${species}`
+                    li.classList.add('list-group-item')
+                    petsResult.appendChild(li)
+                });
+ 
+                createPagination(pagination)
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
+        logout.addEventListener('click', () => {
+            localStorage.removeItem('token')
+            window.location.href = "/login"
+        })
+
+        getPets()
+
+        const changePage = page => {
+            PAGE = page
+            getPets()
+        }
+
+
+        const createPagination = ({ count, currentPage, nextPage, prevPage, totalPages, limit }) => {
+            pagination.textContent = '';
+
+
+            pagination.innerHTML += `
+            <li class="page-item ${!prevPage ? 'disabled' : ''}">
+                <button class="page-link" onclick="getPets('${prevPage}')">Previous</button>
+            </li>
+            `
+
+
+            for (let i = 1; i <= totalPages; i++){
+                pagination.innerHTML += `<li class="page-item ${i === currentPage ? 'active': ''}">
+                    <button class="page-link" onclick="changePage(${i})">${i}</button>
+                </li>`
+1               
+            }
+
+            pagination.innerHTML += `
+            <li class="page-item ${!nextPage ? 'disabled' : ''}">
+                <button class="page-link" onclick="getPets('${nextPage}')">Next</button>
+            </li>
+            `
+        }
+    </script>
+
+
+</body>
+
+</html>
